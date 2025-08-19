@@ -1,3 +1,11 @@
-BOT_TOKEN=7431208621:AAGWwqkTk41q8l56QVu9XLWfc8HqVuE2sD0
-# WEBAPP_URL пока оставьте пустым или закомментируйте, мы его получим позже
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
+def get_main_menu(webapp_url: str):
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    keyboard.add(
+        InlineKeyboardButton(
+            text="🔥 Открыть магазин",
+            web_app=WebAppInfo(url=webapp_url)
+        )
+    )
+    return keyboard
