@@ -6,7 +6,7 @@ from aiogram.filters import CommandStart
 from .keyboards import get_main_menu
 
 router = Router()
-WEBAPP_URL = os.getenv("WEBAPP_URL") # Будем брать из настроек Vercel
+WEBAPP_URL = os.getenv("https://banki-berezino-bot.vercel.app") # Будем брать из настроек Vercel
 
 @router.message(CommandStart())
 async def send_welcome(message: types.Message):
