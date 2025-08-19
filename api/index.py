@@ -5,11 +5,20 @@ from aiogram import Bot, Dispatcher, types
 from bot_utils.handlers import router as main_router # Импортируем наш роутер
 
 # --- Настройки ---
-BOT_TOKEN = os.getenv("8325422439:AAGQPbQvSxnUxBJ5Y4tewVSrHTQZMYUwgPE")
-# URL, который Telegram будет вызывать. Vercel предоставит его.
-WEBHOOK_URL = os.getenv("https://banki-berezino-bot.vercel.app") 
+# Правильно: берем ИМЕНА переменных, а не их значения!
+BOT_TOKEN = os.getenv("BOT_TOKEN") 
+
+# Vercel автоматически предоставляет переменную "VERCEL_URL"
+# В ней содержится основной URL вашего проекта.
+# Нет необходимости создавать для этого отдельную переменную.
+WEBHOOK_URL = os.getenv("VERCEL_URL") 
+
+# --- Проверка, что переменные загрузились ---
+if not BOT_TOKEN or not WEBHOOK_URL:
+    raise ValueError("Необходимо установить переменные окружения BOT_TOKEN и VERCEL_URL")
+
 WEBHOOK_PATH = f"/api/webhook/{BOT_TOKEN}"
-WEBHOOK_FULL_URL = f"{WEBHOOK_URL}{WEBHOOK_PATH}"
+WEBHOOK_FULL_URL = f"https://{WEBHOOK_URL}{WEBHOOK_PATH}" # VERCEL_URL не содержит https://
 
 # --- Инициализация ---
 app = FastAPI()
@@ -45,7 +54,5 @@ async def get_products():
     ]
 
 # Отдаем статику (наш WebApp)
-# Vercel сделает это сам, если файлы в папке public,
-# но этот эндпоинт для FastAPI на случай, если что-то пойдет не так с роутингом.
 from fastapi.staticfiles import StaticFiles
 app.mount("/", StaticFiles(directory="public", html=True), name="static")
