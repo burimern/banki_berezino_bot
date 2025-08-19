@@ -1,1 +1,4 @@
-
+aiogram==3.1.1
+fastapi==0.104.1
+uvicorn==0.24.0 # FastAPI требует его для работы
+python-dotenv==1.0.0
