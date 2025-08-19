@@ -5,9 +5,9 @@ from aiogram import Bot, Dispatcher, types
 from bot_utils.handlers import router as main_router # Импортируем наш роутер
 
 # --- Настройки ---
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+BOT_TOKEN = os.getenv("8325422439:AAGQPbQvSxnUxBJ5Y4tewVSrHTQZMYUwgPE")
 # URL, который Telegram будет вызывать. Vercel предоставит его.
-WEBHOOK_URL = os.getenv("VERCEL_URL") 
+WEBHOOK_URL = os.getenv("https://banki-berezino-bot.vercel.app") 
 WEBHOOK_PATH = f"/api/webhook/{BOT_TOKEN}"
 WEBHOOK_FULL_URL = f"{WEBHOOK_URL}{WEBHOOK_PATH}"
 
