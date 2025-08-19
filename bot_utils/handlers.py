@@ -6,10 +6,17 @@ from aiogram.filters import CommandStart
 from .keyboards import get_main_menu
 
 router = Router()
-WEBAPP_URL = os.getenv("https://banki-berezino-bot.vercel.app") # Будем брать из настроек Vercel
+
+# ПРАВИЛЬНО: Получаем переменную по ее ИМЕНИ
+WEBAPP_URL = os.getenv("WEBAPP_URL") 
 
 @router.message(CommandStart())
 async def send_welcome(message: types.Message):
+    # Добавим проверку, чтобы бот не падал, если переменная не найдена
+    if not WEBAPP_URL:
+        await message.answer("Извините, магазин временно недоступен (ошибка конфигурации URL).")
+        return # Прерываем выполнение
+
     await message.answer(
         "👋 Добро пожаловать в наш магазин!\n\n"
         "Нажмите на кнопку ниже, чтобы посмотреть каталог.",
