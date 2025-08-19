@@ -1,1 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vape Shop</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Каталог товаров</h1>
+        <div id="product-list" class="product-list">
+            <!-- Товары будут загружаться сюда с помощью JS -->
+        </div>
 
+        <h2>Корзина</h2>
+        <div id="cart-items" class="cart-items">
+            <p>Корзина пуста</p>
+        </div>
+        <div class="total">
+            Итого: <span id="total-price">0</span> руб.
+        </div>
+        <button id="checkout-btn" class="checkout-btn hidden">Оформить заказ</button>
+    </div>
+
+    <!-- Скрипт для интеграции с Telegram -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
