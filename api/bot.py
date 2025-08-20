@@ -1,6 +1,7 @@
 import os
 import json
 import asyncio
+import html # <-- Добавляем импорт
 from flask import Flask, request
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart
@@ -37,12 +38,17 @@ async def handle_web_app_data(message: types.Message):
         data = json.loads(message.web_app_data.data)
         
         user = message.from_user
-        user_link = f"@{user.username}" if user.username else f"<a href='tg://user?id={user.id}'>{user.first_name}</a>"
+        # --- ИЗМЕНЕНИЕ ЗДЕСЬ: Экранируем имя пользователя ---
+        safe_user_firstname = html.escape(user.first_name)
+        user_link = f"@{user.username}" if user.username else f"<a href='tg://user?id={user.id}'>{safe_user_firstname}</a>"
 
         admin_message = f"🚨 **Новый заказ от клиента:** {user_link}\n\n"
         admin_message += "--- Состав заказа ---\n"
         for item in data.get('items', []):
-            admin_message += f"• {item.get('name', '?')} (x{item.get('quantity', 1)}) - {item.get('price', 0) * item.get('quantity', 1)} руб.\n"
+            # --- ИЗМЕНЕНИЕ ЗДЕСЬ: Экранируем название товара ---
+            safe_item_name = html.escape(item.get('name', '?'))
+            admin_message += f"• {safe_item_name} (x{item.get('quantity', 1)}) - {item.get('price', 0) * item.get('quantity', 1)} руб.\n"
+        
         admin_message += f"\n💰 **Итого:** {data.get('total_price', 0)} руб.\n\n"
         admin_message += "Напишите клиенту для уточнения деталей доставки."
 
@@ -54,7 +60,11 @@ async def handle_web_app_data(message: types.Message):
         await message.answer("✅ Спасибо! Ваш заказ отправлен менеджеру. Он скоро свяжется с вами для уточнения деталей.")
 
     except Exception as e:
-        print(f"ERROR processing order: {e}")
+        # --- ИЗМЕНЕНИЕ ЗДЕСЬ: Логируем полную ошибку ---
+        print(f"!!! CRITICAL ERROR processing order: {e}", flush=True)
+        # Отправляем уведомление об ошибке себе же, если возможно
+        if ADMIN_CHAT_ID:
+            await bot.send_message(ADMIN_CHAT_ID, f"Критическая ошибка при обработке заказа: {e}")
         await message.answer(f"❗️ Произошла ошибка при отправке заказа.")
 
 async def handle_update(update_data):
