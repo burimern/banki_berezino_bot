@@ -32,10 +32,9 @@ h1 {
 .item-list {
     display: flex;
     flex-direction: column;
-    gap: 20px; /* --- ИЗМЕНЕНИЕ ЗДЕСЬ: Увеличили отступ между элементами --- */
+    gap: 15px;
 }
 
-/* --- Стили для карточек брендов --- */
 .brand-card {
     background-color: var(--secondary-bg-color);
     padding: 20px;
@@ -57,7 +56,6 @@ h1 {
     transform: scale(0.98);
 }
 
-/* --- Стили для карточек товаров --- */
 .product-item {
     background-color: var(--secondary-bg-color);
     padding: 15px;
@@ -92,7 +90,6 @@ h1 {
     background-color: var(--button-hover-color);
 }
 
-/* --- Утилиты --- */
 .hidden {
     display: none;
 }
