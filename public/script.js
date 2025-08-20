@@ -27,7 +27,6 @@ document.addEventListener('DOMContentLoaded', () => {
             brandEl.onclick = () => renderProductsOfBrand(brandName);
             itemListEl.appendChild(brandEl);
         });
-
         tg.BackButton.hide();
     }
 
@@ -46,7 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             itemListEl.appendChild(productEl);
         });
-
         tg.BackButton.show();
     }
 
@@ -62,11 +60,11 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const productId in cart) {
             const quantity = cart[productId];
             if (quantity > 0) {
+                totalItems += quantity;
                 for (const brand in catalogData) {
                     const product = catalogData[brand].find(p => p.id == productId);
                     if (product) {
                         totalPrice += product.price * quantity;
-                        totalItems += quantity;
                         break;
                     }
                 }
@@ -74,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         if (totalItems > 0) {
-            tg.MainButton.setText(`Оформить заказ на ${totalPrice} руб.`);
+            tg.MainButton.setText(`Отправить заказ на ${totalPrice} руб.`);
             tg.MainButton.show();
         } else {
             tg.MainButton.hide();
