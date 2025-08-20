@@ -3,14 +3,12 @@ document.addEventListener('DOMContentLoaded', () => {
     tg.ready();
     tg.expand();
 
-    const catalogTitleEl = document.getElementById('catalog-title'); // Предполагается, что у вас есть <h1> с этим ID
-    const itemListEl = document.getElementById('item-list'); // Основной контейнер для брендов или товаров
+    const catalogTitleEl = document.getElementById('catalog-title');
+    const itemListEl = document.getElementById('item-list');
     const errorEl = document.getElementById('error-message');
 
-    let catalogData = {}; // Здесь будет храниться вся структура { "Brand": [products] }
-    let cart = {}; // {productId: quantity}
-
-    // --- ФУНКЦИИ ОТОБРАЖЕНИЯ ---
+    let catalogData = {}; 
+    let cart = {};
 
     function renderBrands() {
         itemListEl.innerHTML = '';
@@ -24,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         brands.forEach(brandName => {
             const brandEl = document.createElement('div');
-            brandEl.className = 'brand-card'; // Стилизуйте этот класс для красивого вида "папки"
+            brandEl.className = 'brand-card';
             brandEl.textContent = brandName;
             brandEl.onclick = () => renderProductsOfBrand(brandName);
             itemListEl.appendChild(brandEl);
@@ -40,20 +38,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const products = catalogData[brandName];
         products.forEach(product => {
             const productEl = document.createElement('div');
-            productEl.className = 'product-item'; // Ваш класс для карточки товара
-            // ВАЖНО: В Python мы назвали поля 'name' и 'price', а не 'title'
+            productEl.className = 'product-item';
             productEl.innerHTML = `
                 <h3>${product.name}</h3>
                 <p class="price">Цена: ${product.price} руб.</p>
-                <button class="add-to-cart-btn" data-product-id="${product.id}" data-brand-name="${brandName}">Добавить в корзину</button>
+                <button class="add-to-cart-btn" data-product-id="${product.id}">Добавить в корзину</button>
             `;
             itemListEl.appendChild(productEl);
         });
 
         tg.BackButton.show();
     }
-
-    // --- ФУНКЦИИ КОРЗИНЫ (Оставляем почти без изменений) ---
 
     function addToCart(productId) {
         cart[productId] = (cart[productId] || 0) + 1;
@@ -67,13 +62,12 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const productId in cart) {
             const quantity = cart[productId];
             if (quantity > 0) {
-                // Ищем товар во всех брендах
                 for (const brand in catalogData) {
                     const product = catalogData[brand].find(p => p.id == productId);
                     if (product) {
                         totalPrice += product.price * quantity;
                         totalItems += quantity;
-                        break; // Выходим из внутреннего цикла, как только нашли товар
+                        break;
                     }
                 }
             }
@@ -92,21 +86,17 @@ document.addEventListener('DOMContentLoaded', () => {
         errorEl.classList.remove('hidden');
     }
 
-    // --- ЗАГРУЗКА ДАННЫХ ---
-
     async function fetchCatalogData() {
         try {
             const response = await fetch('/api/products');
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             catalogData = await response.json();
-            renderBrands(); // Начинаем с отрисовки брендов
+            renderBrands();
         } catch (error) {
             console.error("Failed to fetch catalog data:", error);
             showError("Не удалось загрузить товары. Попробуйте позже.");
         }
     }
-
-    // --- ОБРАБОТЧИКИ СОБЫТИЙ ---
 
     itemListEl.addEventListener('click', (event) => {
         if (event.target.classList.contains('add-to-cart-btn')) {
@@ -115,14 +105,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Кнопка "Назад" в Web App
     tg.BackButton.onClick(() => {
         renderBrands();
     });
 
-    // Главная кнопка для оформления заказа
     tg.MainButton.onClick(() => {
-        // Логика отправки данных в бот (немного адаптирована)
         const orderData = { items: [], total_price: 0 };
         let totalPrice = 0;
 
@@ -143,6 +130,5 @@ document.addEventListener('DOMContentLoaded', () => {
         tg.sendData(JSON.stringify(orderData));
     });
 
-    // --- ИНИЦИАЛИЗАЦИЯ ---
     fetchCatalogData();
 });
