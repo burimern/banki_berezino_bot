@@ -22,7 +22,7 @@ CACHE = {
     'data': None,
     'last_updated': 0
 }
-CACHE_DURATION = 300  # 5 минут в секундах
+CACHE_DURATION = 150  # 5 минут в секундах
 
 
 def get_products_from_sheets():
