@@ -1,37 +1,28 @@
 import os
+import json
 import asyncio
+from flask import Flask, request
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart
 from aiogram.types import WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton
 
-# --- ВАЖНО: Получаем переменные из Vercel Environment Variables ---
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 WEBAPP_URL = os.getenv("WEBAPP_URL")
-
-# --- Настраиваем Flask-сервер, который будет принимать запросы от Telegram ---
-# Vercel будет запускать именно его
-from flask import Flask, request
+ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
 
 app = Flask(__name__)
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
-# --- Ваши хэндлеры (обработчики сообщений) ---
-# Мы просто перенесли их сюда
-
 def get_main_menu(url: str) -> InlineKeyboardMarkup:
-    """Создает клавиатуру с кнопкой Web App."""
     web_app = WebAppInfo(url=url)
     keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="Каталог товаров", web_app=web_app)]
-        ]
+        inline_keyboard=[[InlineKeyboardButton(text="Каталог товаров", web_app=web_app)]]
     )
     return keyboard
 
 @dp.message(CommandStart())
 async def send_welcome(message: types.Message):
-    """Отправляет приветственное сообщение с кнопкой Web App."""
     if not WEBAPP_URL:
         await message.answer("Ошибка: URL для Web App не настроен.")
         return
@@ -40,21 +31,38 @@ async def send_welcome(message: types.Message):
         reply_markup=get_main_menu(WEBAPP_URL)
     )
 
-# --- Главный обработчик вебхуков ---
-# Это "входная дверь" для всех сообщений от Telegram
-@app.route('/', methods=['POST'])
-def process_webhook():
-    # Запускаем асинхронную обработку обновления
-    asyncio.run(handle_update())
-    return 'ok', 200
+@dp.message(lambda message: message.content_type == types.ContentType.WEB_APP_DATA)
+async def handle_web_app_data(message: types.Message):
+    try:
+        data = json.loads(message.web_app_data.data)
+        
+        user = message.from_user
+        user_link = f"@{user.username}" if user.username else f"<a href='tg://user?id={user.id}'>{user.first_name}</a>"
 
-async def handle_update():
-    """Разбирает запрос и передает его в Aiogram."""
-    update_data = request.get_json()
+        admin_message = f"🚨 **Новый заказ от клиента:** {user_link}\n\n"
+        admin_message += "--- Состав заказа ---\n"
+        for item in data.get('items', []):
+            admin_message += f"• {item.get('name', '?')} (x{item.get('quantity', 1)}) - {item.get('price', 0) * item.get('quantity', 1)} руб.\n"
+        admin_message += f"\n💰 **Итого:** {data.get('total_price', 0)} руб.\n\n"
+        admin_message += "Напишите клиенту для уточнения деталей доставки."
+
+        if ADMIN_CHAT_ID:
+            await bot.send_message(ADMIN_CHAT_ID, admin_message, parse_mode="HTML")
+        else:
+            print("WARNING: ADMIN_CHAT_ID is not set.")
+
+        await message.answer("✅ Спасибо! Ваш заказ отправлен менеджеру. Он скоро свяжется с вами для уточнения деталей.")
+
+    except Exception as e:
+        print(f"ERROR processing order: {e}")
+        await message.answer(f"❗️ Произошла ошибка при отправке заказа.")
+
+async def handle_update(update_data):
     update = types.Update.model_validate(update_data, context={"bot": bot})
     await dp.feed_update(bot=bot, update=update)
 
-# Этот хэндлер НЕ НУЖЕН для вебхуков, но Vercel требует, чтобы что-то было на GET запросе
-@app.route('/', methods=['GET'])
-def home():
-    return "Bot is running (webhook listener)."
+@app.route('/api/bot', methods=['POST'])
+def process_webhook():
+    update_data = request.get_json()
+    asyncio.run(handle_update(update_data))
+    return 'ok', 200
