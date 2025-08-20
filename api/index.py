@@ -130,4 +130,3 @@ if __name__ == '__main__':
     app.run(debug=True)
 # Отдаем статику (наш WebApp)
 from fastapi.staticfiles import StaticFiles
-app.mount("/", StaticFiles(directory="public", html=True), name="static")
