@@ -2,6 +2,7 @@
 import os
 import json
 import asyncio
+import html
 from flask import Flask, request
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart
@@ -19,42 +20,49 @@ async def send_welcome(message: types.Message):
     if not WEBAPP_URL:
         return await message.answer("Ошибка конфигурации.")
     
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Каталог", web_app=WebAppInfo(url=WEBAPP_URL))]])
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text="Каталог", web_app=WebAppInfo(url=WEBAPP_URL))]]
+    )
     await message.answer("Добро пожаловать!", reply_markup=keyboard)
 
 @dp.message(lambda message: message.content_type == types.ContentType.WEB_APP_DATA)
 async def handle_web_app_data(message: types.Message):
-    # --- СНАЧАЛА отвечаем пользователю, чтобы он не ждал ---
-    await message.answer("✅ Спасибо, принял ваш заказ в обработку!")
-
-    # --- ТЕПЕРЬ без спешки готовим и отправляем сообщение админу ---
     ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
     if not ADMIN_CHAT_ID:
         print("CRITICAL: ADMIN_CHAT_ID is not set!")
-        return # Просто выходим, пользователь уже получил ответ
+        # Отвечаем пользователю, даже если админ не настроен
+        return await message.answer("Спасибо! Ваш заказ принят, но уведомление администратору не удалось отправить.")
 
     try:
         data = json.loads(message.web_app_data.data)
         user = message.from_user
         
-        # --- Максимально упрощаем сообщение, убираем HTML-форматирование ---
-        user_info = f"@{user.username}" if user.username else f"ID: {user.id} ({user.first_name})"
+        # Используем HTML для красивой ссылки
+        safe_user_firstname = html.escape(str(user.first_name or ''))
+        user_link = f"@{user.username}" if user.username else f"<a href='tg://user?id={user.id}'>{safe_user_firstname}</a>"
         
-        admin_message = f"Новый заказ от: {user_info}\n\n"
-        admin_message += "Состав:\n"
+        admin_message = f"🚨 **Новый заказ от клиента:** {user_link}\n\n"
+        admin_message += "--- Состав заказа ---\n"
         for item in data.get('items', []):
-            admin_message += f"- {item.get('name', '?')} x{item.get('quantity', 1)}\n"
-        admin_message += f"\nИтого: {data.get('total_price', 0)} руб."
+            safe_item_name = html.escape(str(item.get('name', '?')))
+            admin_message += f"• {safe_item_name} (x{item.get('quantity', 1)}) - {item.get('price', 0) * item.get('quantity', 1)} руб.\n"
+        admin_message += f"\n💰 **Итого:** {data.get('total_price', 0)} руб.\n\n"
+        admin_message += "Напишите клиенту для уточнения деталей."
 
-        await message.bot.send_message(ADMIN_CHAT_ID, admin_message) # Убрали parse_mode
+        await message.bot.send_message(ADMIN_CHAT_ID, admin_message, parse_mode="HTML")
+        await message.answer("✅ Спасибо! Ваш заказ отправлен менеджеру. Он скоро свяжется с вами.")
         
     except Exception as e:
-        # Если что-то пошло не так, отправляем ошибку админу
-        error_text = f"Ошибка при обработке заказа от {user_info}:\n{e}"
-        await message.bot.send_message(ADMIN_CHAT_ID, error_text)
+        print(f"!!! CRITICAL ERROR processing order: {e}")
+        # Если что-то пошло не так, отправляем ошибку админу для диагностики
+        error_text = f"❌ Ошибка при обработке заказа от {user.id}:\n\n<pre>{html.escape(str(e))}</pre>"
+        await message.bot.send_message(ADMIN_CHAT_ID, error_text, parse_mode="HTML")
+        # И отвечаем пользователю
+        await message.answer("❗️ Произошла внутренняя ошибка при обработке вашего заказа. Администратор уже уведомлен.")
 
 # --- Flask-часть ---
 async def process_update(bot: Bot, update_data: dict):
+    # Эта функция остается простой
     update = types.Update.model_validate(update_data, context={"bot": bot})
     await dp.feed_update(bot=bot, update=update)
 
@@ -66,6 +74,6 @@ def webhook_handler():
         
     bot_instance = Bot(token=BOT_TOKEN)
     update_data = request.get_json()
-    # Запускаем обработку в фоне, чтобы сразу вернуть ответ Telegram
-    asyncio.get_event_loop().run_in_executor(None, asyncio.run, process_update(bot_instance, update_data))
+    # Возвращаемся к простому и надежному asyncio.run
+    asyncio.run(process_update(bot_instance, update_data))
     return 'ok', 200
