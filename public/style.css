@@ -1,97 +1,107 @@
 :root {
-    --tg-bg-color: var(--tg-theme-bg-color, #ffffff);
-    --tg-text-color: var(--tg-theme-text-color, #222222);
-    --tg-hint-color: var(--tg-theme-hint-color, #999999);
-    --tg-link-color: var(--tg-theme-link-color, #2481cc);
-    --tg-button-color: var(--tg-theme-button-color, #2481cc);
-    --tg-button-text-color: var(--tg-theme-button-text-color, #ffffff);
-    --tg-secondary-bg-color: var(--tg-theme-secondary-bg-color, #f3f3f3);
+    --bg-color: #17212b;
+    --secondary-bg-color: #2a3948;
+    --text-color: #ffffff;
+    --hint-color: #aeb8c3;
+    --button-color: #5288c1;
+    --button-hover-color: #639cd4;
+    --error-bg-color: #ffdddd;
+    --error-text-color: #d8000c;
 }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
     margin: 0;
     padding: 15px;
-    background-color: var(--tg-bg-color);
-    color: var(--tg-text-color);
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .container {
-    max-width: 390px;
+    max-width: 600px;
     margin: 0 auto;
 }
 
-h1, h2 {
+h1 {
     text-align: center;
-    color: var(--tg-text-color);
-}
-
-.product-list {
     margin-bottom: 20px;
 }
 
+.item-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* --- Стили для карточек брендов --- */
+.brand-card {
+    background-color: var(--secondary-bg-color);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.brand-card:hover {
+    background-color: #3a4c5e;
+    transform: scale(1.02);
+}
+
+.brand-card:active {
+    transform: scale(0.98);
+}
+
+/* --- Стили для карточек товаров --- */
 .product-item {
-    background-color: var(--tg-secondary-bg-color);
-    border-radius: 12px;
+    background-color: var(--secondary-bg-color);
     padding: 15px;
-    margin-bottom: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .product-item h3 {
     margin-top: 0;
+    margin-bottom: 8px;
 }
 
 .product-item .price {
-    font-weight: bold;
-    color: var(--tg-text-color);
-    margin-bottom: 10px;
+    color: var(--hint-color);
+    margin-bottom: 12px;
 }
 
 .add-to-cart-btn {
-    display: block;
     width: 100%;
-    padding: 12px;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--tg-button-text-color);
-    background-color: var(--tg-button-color);
+    padding: 10px;
+    background-color: var(--button-color);
+    color: var(--text-color);
     border: none;
     border-radius: 8px;
     cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
     transition: background-color 0.2s ease;
 }
 
 .add-to-cart-btn:hover {
-    opacity: 0.9;
+    background-color: var(--button-hover-color);
 }
 
-.cart-section {
-    margin-top: 30px;
-}
-
-.cart-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--tg-hint-color);
-}
-
-.total {
-    text-align: right;
-    margin-top: 15px;
-    font-size: 18px;
-}
-
+/* --- Утилиты --- */
 .hidden {
     display: none;
 }
 
 .error {
-    text-align: center;
-    color: var(--tg-theme-destructive-text-color, #ff4d4d);
-    background-color: rgba(255, 77, 77, 0.1);
+    background-color: var(--error-bg-color);
+    color: var(--error-text-color);
     padding: 10px;
-    border-radius: 8px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    text-align: center;
 }
