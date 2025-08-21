@@ -6,16 +6,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const catalogTitleEl = document.getElementById('catalog-title');
     const itemListEl = document.getElementById('item-list');
     const errorEl = document.getElementById('error-message');
+    const cartBar = document.getElementById('cart-bar');
+    const cartItemsEl = document.getElementById('cart-items-count');
+    const cartTotalEl = document.getElementById('cart-total-price');
 
-    let catalogData = {};
-    let cart = {}; // { productId: quantity }
+    let catalogData = {}; 
+    let cart = {};
 
-    // --- Рендер брендов ---
     function renderBrands() {
         itemListEl.innerHTML = '';
         if (catalogTitleEl) catalogTitleEl.textContent = 'Каталог товаров';
-
-        const brands = Object.keys(catalogData).sort();
+        
+        const brands = Object.keys(catalogData);
         if (brands.length === 0) {
             itemListEl.innerHTML = '<p>Товаров пока нет.</p>';
             return;
@@ -31,38 +33,29 @@ document.addEventListener('DOMContentLoaded', () => {
         tg.BackButton.hide();
     }
 
-    // --- Рендер товаров бренда ---
     function renderProductsOfBrand(brandName) {
         itemListEl.innerHTML = '';
         if (catalogTitleEl) catalogTitleEl.textContent = brandName;
 
         const products = catalogData[brandName];
-        products.sort((a, b) => a.name.localeCompare(b.name)).forEach(product => {
+        products.forEach(product => {
             const productEl = document.createElement('div');
             productEl.className = 'product-item';
             productEl.innerHTML = `
                 <h3>${product.name}</h3>
                 <p class="price">Цена: ${product.price} руб.</p>
-                <div class="product-actions">
-                    <button class="decrease-btn" data-product-id="${product.id}">−</button>
-                    <span class="quantity" id="qty-${product.id}">${cart[product.id] || 0}</span>
-                    <button class="increase-btn" data-product-id="${product.id}">+</button>
-                </div>
+                <button class="add-to-cart-btn" data-product-id="${product.id}">Добавить в корзину</button>
             `;
             itemListEl.appendChild(productEl);
         });
         tg.BackButton.show();
     }
 
-    // --- Добавить / уменьшить товар в корзине ---
-    function changeCartQuantity(productId, delta) {
-        cart[productId] = Math.max((cart[productId] || 0) + delta, 0);
-        const qtyEl = document.getElementById(`qty-${productId}`);
-        if (qtyEl) qtyEl.textContent = cart[productId];
+    function addToCart(productId) {
+        cart[productId] = (cart[productId] || 0) + 1;
         updateMainButton();
     }
-
-    // --- Обновление главной кнопки ---
+    
     function updateMainButton() {
         let totalPrice = 0;
         let totalItems = 0;
@@ -84,8 +77,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (totalItems > 0) {
             tg.MainButton.setText(`Отправить заказ на ${totalPrice} руб.`);
             tg.MainButton.show();
+
+            cartItemsEl.textContent = totalItems;
+            cartTotalEl.textContent = `${totalPrice} руб.`;
+            cartBar.classList.remove('hidden');
         } else {
             tg.MainButton.hide();
+            cartBar.classList.add('hidden');
         }
     }
 
@@ -94,7 +92,6 @@ document.addEventListener('DOMContentLoaded', () => {
         errorEl.classList.remove('hidden');
     }
 
-    // --- Загрузка каталога ---
     async function fetchCatalogData() {
         try {
             const response = await fetch('/api/products');
@@ -107,18 +104,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- События кнопок ---
     itemListEl.addEventListener('click', (event) => {
-        const productId = event.target.dataset.productId;
-        if (!productId) return;
-
-        if (event.target.classList.contains('increase-btn')) {
-            changeCartQuantity(productId, 1);
-        } else if (event.target.classList.contains('decrease-btn')) {
-            changeCartQuantity(productId, -1);
+        if (event.target.classList.contains('add-to-cart-btn')) {
+            const productId = event.target.dataset.productId;
+            addToCart(productId);
         }
     });
-
+    
     tg.BackButton.onClick(() => {
         renderBrands();
     });
@@ -133,12 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (const brand in catalogData) {
                     const product = catalogData[brand].find(p => p.id == productId);
                     if (product) {
-                        orderData.items.push({
-                            id: product.id,
-                            name: product.name,
-                            price: product.price,
-                            quantity: quantity
-                        });
+                        orderData.items.push({ id: product.id, name: product.name, price: product.price, quantity: quantity });
                         totalPrice += product.price * quantity;
                         break;
                     }
@@ -147,6 +134,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         orderData.total_price = totalPrice;
         tg.sendData(JSON.stringify(orderData));
+    });
+
+    // Клик по панели корзины имитирует MainButton
+    cartBar.addEventListener('click', () => {
+        tg.MainButton.click();
     });
 
     fetchCatalogData();
