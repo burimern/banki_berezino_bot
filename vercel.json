@@ -6,22 +6,14 @@
       "use": "@vercel/python"
     },
     {
-      "src": "api/bot.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "public/**/*",
+      "src": "public/**",
       "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "src": "/api/products",
+      "src": "/api/(.*)",
       "dest": "api/index.py"
-    },
-    {
-      "src": "/api/bot",
-      "dest": "api/bot.py"
     },
     {
       "src": "/(.*)",
