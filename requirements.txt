@@ -1,8 +1,17 @@
+# Telegram Bot
 aiogram>=3.2.0
+
+# Веб-фреймворк и сервер
 fastapi>=0.109.0
 uvicorn[standard]>=0.27.0
+
+# Работа с переменными окружения
 python-dotenv>=1.0.0
-Flask
-Flask-Cors
-gspread
-oauth2client
+
+# Если нужен Flask для старого кода
+Flask>=2.3.3
+Flask-Cors>=3.1.1
+
+# Работа с Google Sheets
+gspread>=5.7.0
+google-auth>=2.23.0
