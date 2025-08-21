@@ -11,12 +11,16 @@ from aiogram.types import WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton
 
 # --- Инициализация ---
 app = Flask(__name__)
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+if not BOT_TOKEN:
+    raise ValueError("BOT_TOKEN не задан в переменных окружения")
+bot_instance = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
 # --- Глобальный обработчик ошибок ---
 @dp.errors()
 async def error_handler(update: types.Update, exception: Exception):
-    ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
+    ADMIN_CHAT_ID = int(os.getenv("ADMIN_CHAT_ID", 0))
     if ADMIN_CHAT_ID:
         try:
             tb_str = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
@@ -28,9 +32,9 @@ async def error_handler(update: types.Update, exception: Exception):
             )
             if len(error_message) > 4096:
                 error_message = error_message[:4090] + "..."
-            await update.bot.send_message(chat_id=ADMIN_CHAT_ID, text=error_message, parse_mode="HTML")
+            await bot_instance.send_message(ADMIN_CHAT_ID, error_message, parse_mode="HTML")
         except Exception as e:
-            print(f"!!! Не удалось отправить ошибку админу: {e}")
+            print(f"Не удалось отправить ошибку админу: {e}")
     return True
 
 # --- Старт ---
@@ -49,7 +53,7 @@ async def send_welcome(message: types.Message):
 # --- Обработка заказа из WebApp ---
 @dp.message(lambda m: m.content_type == types.ContentType.WEB_APP_DATA)
 async def handle_web_app_data(message: types.Message):
-    ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
+    ADMIN_CHAT_ID = int(os.getenv("ADMIN_CHAT_ID", 0))
 
     try:
         data = json.loads(message.web_app_data.data)
@@ -62,7 +66,6 @@ async def handle_web_app_data(message: types.Message):
 
     admin_message = f"🛒 <b>Новый заказ</b>\n\n👤 Клиент: {user_link}\n\n"
 
-    # Состав заказа
     total = 0
     for item in data.get("items", []):
         safe_item_name = html.escape(str(item.get("name", "?")))
@@ -76,24 +79,26 @@ async def handle_web_app_data(message: types.Message):
     admin_message += "\nНапишите клиенту для уточнения деталей."
 
     if ADMIN_CHAT_ID:
-        await message.bot.send_message(ADMIN_CHAT_ID, admin_message, parse_mode="HTML")
+        try:
+            # Разбиваем сообщение на части, если оно слишком длинное
+            max_len = 4096
+            for i in range(0, len(admin_message), max_len):
+                await bot_instance.send_message(ADMIN_CHAT_ID, admin_message[i:i+max_len], parse_mode="HTML")
+        except Exception as e:
+            print(f"Не удалось отправить заказ в группу: {e}")
 
     await message.answer("✅ Спасибо! Ваш заказ отправлен менеджеру.")
 
-# --- Flask-часть ---
-async def process_update(bot: Bot, update_data: dict):
-    print("=== Update ===")
-    print(update_data)  # лог для дебага
-    update = types.Update.model_validate(update_data, context={"bot": bot})
-    await dp.feed_update(bot=bot, update=update)
+# --- Асинхронная обработка webhook ---
+async def process_update(update_data: dict):
+    update = types.Update.model_validate(update_data, context={"bot": bot_instance})
+    await dp.feed_update(bot=bot_instance, update=update)
 
 @app.route("/api/bot", methods=["POST"])
 def webhook_handler():
-    BOT_TOKEN = os.getenv("BOT_TOKEN")
-    if not BOT_TOKEN:
-        return "Bot token not provided", 500
-
-    bot_instance = Bot(token=BOT_TOKEN)
     update_data = request.get_json()
-    asyncio.run(process_update(bot_instance, update_data))
+    if not update_data:
+        return "Нет данных", 400
+    # Используем asyncio.create_task, чтобы не блокировать Flask
+    asyncio.create_task(process_update(update_data))
     return "ok", 200
