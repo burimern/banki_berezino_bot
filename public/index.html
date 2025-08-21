@@ -2,31 +2,17 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Vape Shop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vape Shop Bot</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1 id="catalog-title">Каталог товаров</h1>
-        
-        <div id="error-message" class="error hidden"></div>
-
-        <div id="item-list" class="item-list">
-            <p>Загрузка товаров...</p>
-        </div>
+        <h1>🤖 Vape Shop Bot</h1>
+        <p>Телеграм-бот для магазина запущен и работает!</p>
+        <button id="setWebhookBtn">Установить Webhook</button>
+        <p id="status"></p>
     </div>
-
-    <!-- Плавающая корзина -->
-    <div id="cart-bar" class="cart-bar hidden">
-        <div class="cart-info">
-            <span class="cart-items" id="cart-items-count">0</span>
-            <span>Товары в корзине</span>
-        </div>
-        <div class="cart-total" id="cart-total-price">0 руб.</div>
-    </div>
-
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
